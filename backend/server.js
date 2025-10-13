@@ -175,31 +175,18 @@ app.get('/api/productos/:id', async (req, res) => {
 });
 
 // Crear producto (admin)
-app.post('/api/productos', authMiddleware, upload.array('archivos', 10), async (req, res) => {
+app.post('/api/productos', authMiddleware, async (req, res) => {
   try {
-    const { nombre, descripcion, precio, categoria, colores, stock, destacado } = req.body;
-    
-    const imagenes = [];
-    const videos = [];
-    
-    if (req.files) {
-      req.files.forEach(file => {
-        if (file.resource_type === 'video') {
-          videos.push(file.path);
-        } else {
-          imagenes.push(file.path);
-        }
-      });
-    }
+    const { nombre, descripcion, precio, categoria, colores, stock, destacado, imagenes } = req.body;
     
     const producto = new Producto({
       nombre,
       descripcion,
       precio: parseFloat(precio),
-      imagenes,
-      videos,
+      imagenes: imagenes || [],
+      videos: [], // Assuming videos are not sent via JSON body for creation
       categoria,
-      colores: colores ? JSON.parse(colores) : [],
+      colores: colores || [], // Frontend already sends an array of strings
       stock: parseInt(stock) || 1,
       destacado: destacado === 'true'
     });
@@ -212,22 +199,9 @@ app.post('/api/productos', authMiddleware, upload.array('archivos', 10), async (
 });
 
 // Actualizar producto (admin)
-app.put('/api/productos/:id', authMiddleware, upload.array('archivos', 10), async (req, res) => {
+app.put('/api/productos/:id', authMiddleware, async (req, res) => {
   try {
-    const { nombre, descripcion, precio, categoria, colores, stock, destacado, activo, imagenesExistentes, videosExistentes } = req.body;
-    
-    const imagenes = imagenesExistentes ? JSON.parse(imagenesExistentes) : [];
-    const videos = videosExistentes ? JSON.parse(videosExistentes) : [];
-    
-    if (req.files) {
-      req.files.forEach(file => {
-        if (file.resource_type === 'video') {
-          videos.push(file.path);
-        } else {
-          imagenes.push(file.path);
-        }
-      });
-    }
+    const { nombre, descripcion, precio, categoria, colores, stock, destacado, activo, imagenes, videos } = req.body;
     
     const producto = await Producto.findByIdAndUpdate(
       req.params.id,
@@ -235,10 +209,10 @@ app.put('/api/productos/:id', authMiddleware, upload.array('archivos', 10), asyn
         nombre,
         descripcion,
         precio: parseFloat(precio),
-        imagenes,
-        videos,
+        imagenes: imagenes || [],
+        videos: videos || [],
         categoria,
-        colores: colores ? JSON.parse(colores) : [],
+        colores: colores || [],
         stock: parseInt(stock),
         destacado: destacado === 'true',
         activo: activo === 'true'
